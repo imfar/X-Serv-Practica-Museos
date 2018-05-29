@@ -14,6 +14,11 @@ class Museo(models.Model):
 	telefono = models.CharField(max_length=9)
 	email = models.CharField(max_length=128)
 	
+	num_selecciones = models.IntegerField(default=0)
 	def __str__(self):
 		return self.name
 
+
+class Comentario(models.Model):
+	texto = models.TextField()
+	museo = models.ForeignKey(Museo)
