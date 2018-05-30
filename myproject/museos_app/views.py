@@ -1,6 +1,10 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+# modelos:
 from .models import Museo
 from .models import Comentario
+from .models import Usuario
+from .models import Seleccion
+from django.contrib.auth.models import User
 
 from django.shortcuts import render
 from django.template.loader import get_template
@@ -17,6 +21,8 @@ from .xml_parser_museos import parsear
 from django.utils.datastructures import MultiValueDictKeyError
 
 import sys
+
+
 # Create your views here.
 
 BOTON_ACCESIBLES = """<form method="GET" action="/">
@@ -43,6 +49,7 @@ def update(request):  # actualiza los contenidos y almacena en DB via RSS
 	parsear()
 	return redirect('/museos')
 
+
 @csrf_exempt		
 def root_page(request):
 	mas = "Más información..."
@@ -67,23 +74,49 @@ def root_page(request):
 	return HttpResponse(html)
 
 
+def boton_seleccion(ide):
+	html = "<form method='POST' action='/museos/'>\
+					<input type='hidden' name='id_selecc' value='" + ide + "'>\
+					<input type='submit' value='Seleccionar este museo'/>\
+					</form>"
+	return html
+
+
+@csrf_exempt
 def lista_museos(request):
 	html = "<html><body>" + FORM_DISTRITO
 	ver_mas = "ver más..."
-	if request.method == "GET":
+	
+	try:
+		distrito = request.GET['distrito']
+		museos_DB = Museo.objects.filter(distrito=distrito)
+
+	except MultiValueDictKeyError:  # no filtro
+		museos_DB = Museo.objects.all()
+
+	for my_museo in museos_DB:
+		html += ("<li>"+ my_museo.name + my_museo.access + 
+		my_museo.distrito + "<a href='/museos/" + str(my_museo.id) + "'>" 
+		+ ver_mas + "</a><br>")
+		if request.user.is_authenticated():
+			html += boton_seleccion(str(my_museo.id))
+			
+	if request.method == "POST":  # Cuando seleccionan un MUSEO
+		ide = request.POST['id_selecc']
+		museo_DB = Museo.objects.get(id=int(ide))
+		u = User.objects.get(username=request.user.username)
 		try:
-			distrito = request.GET['distrito']
-			museos_DB = Museo.objects.filter(distrito=distrito)
-
-		except MultiValueDictKeyError:	
-			museos_DB = Museo.objects.all()
-
-		for my_museo in museos_DB:
-			html += ("<li>"+ my_museo.name + my_museo.access + 
-			my_museo.distrito + "<a href='/museos/" + str(my_museo.id) + "'>" 
-			+ ver_mas + "</a><br>")
-	else:  #POST PARA SELECCIONAR MUSEO
-		print("museo seleccionado")
+			new_user = Usuario.objects.get(nombre=u)
+		except:  # si no ha seleccionado nada previamente
+			new_user = Usuario(nombre=u)
+			new_user.save()
+		
+		new_selecc = Seleccion(museo=museo_DB, usuario=new_user)
+		new_selecc.save()
+		museo_DB.selecciones = museo_DB.selecciones + 1  # añadir seleccion a museo
+		museo_DB.save()
+		html += "Nuevo museo " + museo_DB.name + " añadido!"
+		
 	html += "</body></html>"
 	return HttpResponse(html)
 
@@ -97,7 +130,7 @@ def caja_comentario(ide):
 
 
 @csrf_exempt
-def un_museo(request, ide):
+def pag_museo(request, ide):
 	my_museo = Museo.objects.get(id=int(ide))
 
 	html = "<html><body>"
@@ -126,11 +159,25 @@ def un_museo(request, ide):
 			new_comment = Comentario(texto=texto, museo=my_museo)
 			new_comment.save()
 			museo_redirect = "/museos/" + str(ide)
-			return redirect(museo_redirect)
+			return HttpResponseRedirect(museo_redirect)
 			
 	html += "</body></html>"
 	return HttpResponse(html)
 
-	
-	
-	
+
+def pag_usuario(request, a_user):
+	num = Usuario.objects.filter(nombre=a_user).count()  # ver si el usuario tiene selecciones
+	html = "<html><body>"
+	if num != 0:
+		html += "Museos seleccionados: <br>"
+		mas = "Más información..."
+		usuario = Usuario.objects.filter(nombre=a_user)
+		seleccionados = Seleccion.objects.filter(usuario=usuario)
+		for my_museo in seleccionados:
+			html += "<li>"+ my_museo.museo.name + "<br>" + my_museo.museo.direccion + "<a href\
+			='/museos/" + str(my_museo.museo.id) + "'>" + mas + "</a><br>"
+			html += str(my_museo.date) + "</body></html>"
+	else:
+		html += "No has seleccionado ningun museo."
+
+	return HttpResponse(html)

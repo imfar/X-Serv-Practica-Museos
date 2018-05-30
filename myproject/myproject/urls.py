@@ -23,5 +23,6 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^update$', 'museos_app.views.update'),
     url(r'^museos/$', 'museos_app.views.lista_museos'),
-    url(r'^museos/(.+)$', 'museos_app.views.un_museo'),
+    url(r'^museos/(.+)$', 'museos_app.views.pag_museo'),
+    url(r'^(.+)/$', 'museos_app.views.pag_usuario'),
 ]
