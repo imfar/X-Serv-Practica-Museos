@@ -12,7 +12,7 @@ class Museo(models.Model):
 	direccion = models.TextField()
 	barrio = models.CharField(max_length=128)
 	distrito = models.CharField(max_length=128)
-	telefono = models.CharField(max_length=64)
+	telefono = models.CharField(max_length=128)
 	email = models.CharField(max_length=128)
 	
 	selecciones = models.IntegerField(default=0)
@@ -33,7 +33,7 @@ class Usuario(models.Model):
 	size = models.CharField(max_length=64, default="")
 	color = models.CharField(max_length=64, default="")
 	def __str__(self):
-		return self.nombre + self.titulo
+		return self.nombre + " " + self.titulo
 
 class Seleccion(models.Model):
 	museo = models.ForeignKey(Museo)

@@ -22,7 +22,7 @@ from django.shortcuts import redirect
 from .xml_parser_museos import parsear
 
 from django.utils.datastructures import MultiValueDictKeyError
-
+import math
 import sys
 
 
@@ -56,6 +56,8 @@ FORM_LOGUEAR = """Iniciar sesion: <br>
 				</form>
 				"""
 
+MAX = 5  # num de museos en root page y en pag de usuario
+
 def update(request):  # actualiza los contenidos y almacena en DB via RSS
 	Museo.objects.all().delete()
 	parsear()
@@ -67,6 +69,8 @@ def logout_view(request):
     return HttpResponseRedirect('/')
 
 def mas_seleccionados(museos_DB):
+	# 5 MUSEOS MAS SELECCIONADOS
+	# Si no existen 5 => LOS MAS SELECCIONADOS
 	lista = []  # lista de total de selecciones x museo
 	for m in museos_DB:
 		if m.selecciones>0:
@@ -75,21 +79,22 @@ def mas_seleccionados(museos_DB):
 
 	total = len(lista)
 	if total > 0:
-		lista.sort(reverse=True) 
+		lista.sort(reverse=True) # de mayor a menor
 	else:
 		html = "No hay museos seleccionados"
 		return html
 	
-	if total < 5:
+	print("lista antes", lista)
+	if total < MAX:
 		lista = lista[0:total]
 	else:
-		lista = lista[0:4] # solo los 5 mas seleccionados
-	
+		lista = lista[0:MAX] # solo los 5 mas seleccionados
+
 	html = ""
 	mas = "Más información..."
 	num = 0
 	for m in museos_DB:
-		if m.selecciones in lista and num <= 5:
+		if m.selecciones in lista and num < MAX:
 			num = num + 1
 			enlace_name = "<a href='" + m.link + "'>" + m.name + "</a><br>"
 			html += enlace_name + m.direccion + " <a href\
@@ -132,9 +137,23 @@ def root_page(request):
 		return HttpResponseRedirect('/')
 		
 	# 5 MUSEOS MAS SELECCIONADOS
-	# Si no existen 5 => LOS MAS SELECCIONADOS
 	museos_mas = mas_seleccionados(museos_DB)
-	html += museos_mas + "</body></html>"
+	html += museos_mas
+	
+	# PAGINAS PERSONALES DISPONIBLES
+	pags_user = ""
+	lista = []
+	users_s = Seleccion.objects.all()
+	for u in users_s:
+		user_name = u.usuario.nombre
+		title = u.usuario.titulo
+		if user_name not in lista:
+			if title == "":
+				title = "Pagina de " + user_name
+			pags_user += "<a href='" + user_name + "'>" + title + "</a><br>" + user_name + "<br>"
+		lista.append(user_name)
+	
+	html += pags_user + "</body></html>"
 	return HttpResponse(html)
 
 
@@ -148,10 +167,18 @@ def boton_seleccion(ide):
 
 @csrf_exempt
 def lista_museos(request):
-	html = "<html><body>" + FORM_DISTRITO
+	html = "<html><body>"
 	ver_mas = "ver más..."
 	nuevo_add = ""
-	
+
+	if request.user.is_authenticated():
+		logged = "Logged in as "+ request.user.username + ". <a href='/logout'>\
+		Logout</a>"
+		html += logged + FORM_DISTRITO
+	else:
+		html += FORM_LOGUEAR + FORM_DISTRITO
+
+
 	try: # GET
 		distrito = request.GET['distrito']
 		museos_DB = Museo.objects.filter(distrito=distrito)
@@ -162,11 +189,10 @@ def lista_museos(request):
 	if request.method == "POST":  # Cuando seleccionan un MUSEO 
 		ide = request.POST['id_selecc']
 		museo_DB = Museo.objects.get(id=int(ide))
-		user_name = User.objects.get(username=request.user.username)
+		user_name = User.objects.get(username=request.user.username) # users admin
 		try: # es usuario que ya ha seleccionado
 			usuario = Usuario.objects.get(nombre=user_name)
 		except:  # si es su primera seleccion
-			print("primer except")
 			new_user = Usuario(nombre=user_name)
 			new_user.save()
 			usuario = Usuario.objects.all().last()
@@ -211,6 +237,13 @@ def pag_museo(request, ide):
 	my_museo = Museo.objects.get(id=int(ide))
 
 	html = "<html><body>"
+	if request.user.is_authenticated():
+		logged = "Logged in as "+ request.user.username + ". <a href='/logout'>\
+		Logout</a>"
+		html += logged + "<br><br>"
+	else:
+		html += FORM_LOGUEAR
+	
 	html += my_museo.name + "<br>" + my_museo.descrip + "<br>ACCESIBLE: "
 	html += my_museo.access + "<br>Enlace oficial: " + my_museo.link
 	html += "<br> Direccion: " + my_museo.direccion + " - " + my_museo.barrio
@@ -245,20 +278,38 @@ def caja_titulo(a_user):
 	form_titulo = "<form action='/" + a_user + "/' method='POST'>\
     				Cambia el titulo de tu página!: \
     				<input type='text' name='titulo' value=''><br>\
+    				<input type='hidden' name='option' value='1'>\
     				<input type='submit' value='Cambiar'>\
     				</form>"
 
 	return form_titulo
 
 
-def museos_seleccionados(a_user):
+def museos_seleccionados(a_user, pag):
 	contenido = "Museos seleccionados por " + a_user + ": <br><br>"
 	usuario = Usuario.objects.filter(nombre=a_user)
+	total_s = Seleccion.objects.filter(usuario=usuario).count()
+	fin_teorico = (int(pag)*MAX)-1 # 4, 9, 14 (cuando se seleccionan multiplos de 5 museos)
+	inicio= fin_teorico-(MAX-1)
+	if fin_teorico>total_s-1:
+		fin_real = total_s-1
+	else:
+		fin_real = fin_teorico
+
 	seleccionados = Seleccion.objects.filter(usuario=usuario)
+	aux = 0
 	for s in seleccionados:
-		enlace_name = "<a href='" + s.museo.link + "'>" + s.museo.name + "</a><br>"
-		contenido += enlace_name + s.museo.direccion
-		contenido += " " + str(s.date) + "<br><br>"
+		if aux>=inicio and aux<=fin_real:
+			enlace_name = "<a href='" + s.museo.link + "'>" + s.museo.name + "</a><br>"
+			contenido += enlace_name + s.museo.direccion
+			contenido += " " + str(s.date) + "<br><br>"
+		aux = aux + 1
+
+	num_pags = math.ceil(total_s/MAX)  # redondea al entero superior
+	print(total_s, num_pags)
+	for i in range(num_pags):
+		contenido += "<a href='/" + a_user + "=" + str(i+1) + "'>" + str(i+1) + "</a>"
+		contenido += " "
 	return contenido
 
 
@@ -270,7 +321,6 @@ def generar_titulo(a_user):
 		else:
 			my_titulo = "Pagina de " + a_user
 	except: # si no ha seleccionado nada antes
-		print("error en ")
 		my_titulo = "Pagina de " + a_user
 	
 	return my_titulo
@@ -278,6 +328,11 @@ def generar_titulo(a_user):
 
 @csrf_exempt	
 def pag_usuario(request, a_user):
+	try:
+		[a_user, pag] = a_user.split('=')
+	except ValueError:
+		pag = "1"
+	print(a_user, pag)
 	if request.method == "GET":
 		form_titulo = ""
 		if request.user.is_authenticated():
@@ -288,9 +343,10 @@ def pag_usuario(request, a_user):
 				usuario = Usuario.objects.get(nombre=a_user)
 				my_titulo = generar_titulo(a_user)
 				if user_logueado == a_user:
-					form_titulo = caja_titulo(a_user)	
-				contenido = museos_seleccionados(a_user)
+					form_titulo = caja_titulo(a_user)
+				contenido = museos_seleccionados(a_user, pag)
 			except: # si no ha seleccionado nada antes
+				print("Unexpected error:", sys.exc_info()[0])
 				my_titulo = "Pagina de " + a_user
 				  # no puede cambiar titulo
 				contenido = "No tienes museos seleccionados"
@@ -298,7 +354,7 @@ def pag_usuario(request, a_user):
 		else:  # visitante que entra a la pagina de un usuario
 			logged = FORM_LOGUEAR
 			my_titulo = generar_titulo(a_user)
-			contenido = museos_seleccionados(a_user)
+			contenido = museos_seleccionados(a_user, pag)
 
 		html = ("<html><body>" + logged + "<br><h1>" + my_titulo + "</h1>" +
 		form_titulo + contenido + "</html></body>")
@@ -306,19 +362,15 @@ def pag_usuario(request, a_user):
 		
 	else: # POST
 		# solo lo cambian usuarios logueados y que han seleccionado algun museo
-		new_titulo = request.POST['titulo']
-		print(new_titulo)
-		# actualizar titulo
-		usuario = Usuario.objects.get(nombre=a_user)
-		usuario.titulo = new_titulo
-		usuario.save() 
-		pag_user = "/" + a_user
-		return HttpResponseRedirect(pag_user)
+		opcion = request.POST['option']
+		if opcion == '1':
+			new_titulo = request.POST['titulo']
+			usuario = Usuario.objects.get(nombre=a_user)
+			usuario.titulo = new_titulo
+			usuario.save() 
+			pag_user = "/" + a_user
+			return HttpResponseRedirect(pag_user)
+		else:
+			return HttpResponse("ok") # PARA CAMBIAR CSS
 		
-		
-		
-		
-		
-		
-		
-		
+
