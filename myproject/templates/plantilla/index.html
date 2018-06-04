@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PRACTICA FINAL MUSEOS - JUNIO 2018</title>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<link rel="stylesheet" href="/plantilla/stylesheet.css" type="text/css" />
+</head>
+
+<body style = 'background-color:{{color}}'>
+
+<div id="header">
+	<div class="banner"> <img src="/plantilla/business_card.jpg" height="200" width="600"> </div>
+	<div class="log">{{log|safe}}</div>
+</div>
+	
+<div id="container" style ='font-size:{{size}}'>
+	<div id="navigation">
+		<ul>
+			<li><a href="/">HOME</a></li>
+			<li><a href="/museos">MUSEOS</a></li>
+			{% if user.is_authenticated %}
+				<li><a href="/{{user.username}}">MI PERFIL</a></li>
+			{% endif %}
+			<li><a href="/about">ABOUT</a></li>
+			<li><a href="/update">CARGAR MUSEOS</a></li>
+		</ul>
+	</div>
+                
+	<div id="content">
+		<h1>{{ titulo  }}</h1>
+		<h2>{{ sub_titulo }}</h2>
+		<p>{{ cont|safe }}</p>
+		
+		<div class="post_info">
+			Practica Final Museos - SARO - 2018 | URJC
+		</div>
+		
+		<div id="footer">
+			Powered by <a href="https://github.com/imfar/X-Serv-Practica-Museos">imfar</a> | 2018 &copy; All your copyright information here.<br /> 
+			<a href ="https://datos.madrid.es/portal/site/egob/menuitem.c05c1f754a33a9fbe4b2e4b284f1a5a0/?vgnextoid=118f2fdbecc63410VgnVCM1000000b205a0aRCRD&vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD&vgnextfmt=default"
+			>Esta aplicación utiliza datos del portal de datos abiertos de la ciudad de Madrid</a><br>
+			Template design by <a href="http://www.iseeyou-designs.com">I See You - Designs</a> | <a href="http://jigsaw.w3.org/css-validator/check/referer">CSS</a> &amp; <a href="http://validator.w3.org/check?uri=referer">XHTML Strict!</a> valid.</p>
+		</div>
+	</div>
+</div>
+
+</body>
+
+</html>

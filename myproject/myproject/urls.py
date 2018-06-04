@@ -21,6 +21,8 @@ from django.contrib.auth.views import logout, login
 urlpatterns = [
 	url(r'^$', 'museos_app.views.root_page'),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^plantilla/(.*)', serve, {'document_root': 'templates/plantilla'}),
+    url(r'about/$', 'museos_app.views.about'),
     url(r'^update$', 'museos_app.views.update'),
     url(r'^museos/$', 'museos_app.views.lista_museos'),
     url(r'^museos/(.+)$', 'museos_app.views.pag_museo'),
