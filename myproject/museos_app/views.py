@@ -441,7 +441,8 @@ def about(request):
 	cont += "<p>Grado: Sistemas de Telecomunicaciones</p>"
 	cont += "<p> La práctica consiste en una página sobre museos de Madrid donde podrás obtener información básica sobre ellos, comentar los museos, filtrar por distritos, seleccionar los que más te guste a tu página personal siempre y cuando hayas iniciado sesión, visitar su página oficial, etc.</p>"
 	cont += "<p>En la página principal (HOME) se mostrarán los museos más seleccionados por los usuarios y las páginas de estos. Se podrán filtrar los museos accesibles entre los más seleccionados.</p>"
-	cont += "<p>En la página de museos (MUSEOS) podrás ver todos los museos disponibles, filtrarlos por distrito y seleccionar el museo de tu interés a tu página personal (siempre que estés logueado)</p>"
-	cont += "<p>Si estás logueado podrás acceder a tu paǵina personal (MI PERFIL) y ver tus museos seleccionados y la hora en los que los seleccionaste.</p>"
+	cont += "<p>En la página de museos (MUSEOS) podrás ver todos los museos disponibles, filtrarlos por distrito y seleccionar el museo de tu interés a tu página personal (siempre que estés logueado). Puedes también acceder a la página de cada museo y comentar.</p>"
+	cont += "<p>Si estás logueado podrás acceder a tu paǵina personal (MI PERFIL) y ver tus museos seleccionados y la hora en los que los seleccionaste. Aquí podras personalizar la página en general (cambiando el color de fondo o el tamaño de la letra)</p>"
+	cont += "<p>La pestaña de CARGAR MUSEOS permite obtener de la página oficial todos los museos y guardarlos en una base de datos. CUIDADO: También elimina todo lo guardado anteriormente en la Base de Datos.</p>"
 	my_template = get_plantilla(request, titulo, sub_titulo, cont)
 	return HttpResponse(my_template)
