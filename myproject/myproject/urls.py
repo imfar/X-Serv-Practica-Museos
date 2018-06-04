@@ -27,5 +27,6 @@ urlpatterns = [
     url(r'^museos/$', 'museos_app.views.lista_museos'),
     url(r'^museos/(.+)$', 'museos_app.views.pag_museo'),
     url(r'^logout', 'museos_app.views.logout_view'),
+    url(r'^(.+)/json$', 'museos_app.views.canal_usuario'),
     url(r'^(.+)/$', 'museos_app.views.pag_usuario'),
 ]

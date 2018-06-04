@@ -16,7 +16,6 @@ class myContentHandler(ContentHandler):
 		self.atributo = ""
 		self.inContent = False
 		self.theContent = ""
-		self.identidad = ""
 		self.name = ""
 		self.descripcion = ""
 		self.accesibilidad = ""
@@ -31,7 +30,7 @@ class myContentHandler(ContentHandler):
 	def startElement (self, name, attrs):
 		if name == 'atributo':
 			self.atributo = attrs.get('nombre')
-		if self.atributo in ['ID-ENTIDAD', 'NOMBRE', 'DESCRIPCION-ENTIDAD',
+		if self.atributo in ['NOMBRE', 'DESCRIPCION-ENTIDAD',
 							'ACCESIBILIDAD', 'CONTENT-URL', 'NOMBRE-VIA',
 							'CLASE-VIAL', 'NUM', 'BARRIO', 'DISTRITO', 
 							'TELEFONO', 'EMAIL']:
@@ -39,9 +38,7 @@ class myContentHandler(ContentHandler):
 
             
 	def endElement (self, name):
-		if self.atributo == 'ID-ENTIDAD':
-			self.identidad = self.theContent
-		elif self.atributo == 'NOMBRE':
+		if self.atributo == 'NOMBRE':
 			self.name = self.theContent
 		elif self.atributo == 'DESCRIPCION-ENTIDAD':
 			self.descripcion = self.theContent			
@@ -71,18 +68,16 @@ class myContentHandler(ContentHandler):
 		self.atributo = ""
 		
 		if name == 'contenido':
-			museo = Museo(identidad = self.identidad, name = self.name, 
-			descrip = self.descripcion, access = self.accesibilidad, 
-			link = self.link, direccion = self.direccion, 
-			barrio = self.barrio, distrito = self.distrito,
-			telefono = self.telefono, email = self.email)
+			museo = Museo(name = self.name, descrip = self.descripcion, 
+			access = self.accesibilidad, link = self.link, 
+			direccion = self.direccion, barrio = self.barrio, 
+			distrito = self.distrito, telefono = self.telefono, email = self.email)
 			
 			museo.save()
 
 			self.inContent = False
 			self.theContent = ""		
 			self.atributo = ""  # inicializamos nuevamente
-			self.identidad = ""
 			self.name = ""
 			self.descripcion = ""
 			self.accesibilidad = ""

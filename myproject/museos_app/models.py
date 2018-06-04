@@ -4,7 +4,6 @@ from django.utils import timezone
 # Create your models here.
 
 class Museo(models.Model):
-	identidad = models.CharField(max_length=10)
 	name = models.CharField(max_length=128)
 	descrip = models.TextField(default="")
 	access = models.CharField(max_length=1)  # accesible 'O' o '1'

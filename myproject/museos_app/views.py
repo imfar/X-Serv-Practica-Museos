@@ -25,7 +25,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 
 import math
 import sys
-
+import json
 
 # Create your views here.
 
@@ -323,7 +323,7 @@ def museos_seleccionados(a_user, pag):
 	aux = 0
 	for s in seleccionados:
 		if aux>=inicio and aux<=fin_real:
-			enlace_name = "<p> - <a href='" + s.museo.link + "'>" + s.museo.name + "</a></p>"
+			enlace_name = "<p> - <a href='" + s.museo.link + "'>" + "<b>" + s.museo.name + "</b>" + "</a></p>"
 			contenido += enlace_name + "<p>" + s.museo.direccion
 			contenido += "  | " + str(s.date) + "</p>"
 		aux = aux + 1
@@ -351,6 +351,13 @@ def generar_titulo(a_user):
 	return my_titulo
 
 
+def boton_json(a_user):
+	form_json = "<center><form method='GET' action='/" + a_user + "/json'>\
+				<input type='submit' value='VER CANAL JSON' />\
+				</form></center>"
+	return form_json
+
+
 @csrf_exempt	
 def pag_usuario(request, a_user):
 	try:
@@ -359,12 +366,13 @@ def pag_usuario(request, a_user):
 		pag = "1"
 
 	if request.method == "GET":
+		cont = boton_json(a_user)
 		if request.user.is_authenticated():
 			try:
 				user_logueado = request.user.username
 				usuario = Usuario.objects.get(nombre=a_user)
 				titulo = generar_titulo(a_user)
-				cont = museos_seleccionados(a_user, pag)
+				cont += museos_seleccionados(a_user, pag)
 				if user_logueado == a_user:
 					form_titulo = personalizar(a_user, option="1")
 					form_color = personalizar(a_user, option="2")
@@ -375,11 +383,12 @@ def pag_usuario(request, a_user):
 				# no puede personalizar pagina
 				print("Unexpected error:", sys.exc_info()[0])
 				titulo = "Pagina de " + a_user
-				cont = "No tienes museos seleccionados"
+				cont += "No tienes museos seleccionados"
 		
 		else:  # visitante que entra a la pagina de un usuario
 			titulo = generar_titulo(a_user)
-			cont = museos_seleccionados(a_user, pag)
+			usuario = Usuario.objects.get(nombre=a_user)
+			cont += museos_seleccionados(a_user, pag)
 		
 		sub_titulo = "Museos seleccionados por " + a_user + ":"
 		my_template = get_plantilla (request, titulo, sub_titulo, cont)
@@ -401,7 +410,28 @@ def pag_usuario(request, a_user):
 			usuario.size = new_size + "px"
 		usuario.save()
 		return HttpResponseRedirect(pag_user)
-		
+
+	
+def canal_usuario(request, a_user):  # canal JSON para los museos seleccionados
+	try:
+		usuario = Usuario.objects.filter(nombre=a_user)
+		seleccionados = Seleccion.objects.filter(usuario=usuario)
+		data={}
+		for s in seleccionados:
+			data[s.museo.name] = {"name": s.museo.name,
+					"descrip": s.museo.descrip,
+					"access": s.museo.access,
+					"direccion": s.museo.direccion,
+					"barrio": s.museo.barrio,
+					"distrito": s.museo.distrito,
+					"telefono": s.museo.telefono,
+					"email": s.museo.email
+					}
+		dump = json.dumps(data)
+		return HttpResponse(dump, content_type='application/json')
+	except:
+		return HttpResponse("Usuario no ha seleccionado ningún museo")
+
 
 def about(request):
 	template = get_template("plantilla/index.html")
