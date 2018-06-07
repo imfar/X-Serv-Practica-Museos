@@ -152,7 +152,7 @@ def root_page(request):
 		autent = authenticate(username=user_name, password=user_pass)
 		if autent is None:
 			error = "ERROR AL INICIAR SESION"
-			cont += error
+			cont = error
 		else:
 			login(request, autent)
 		return HttpResponseRedirect('/')
