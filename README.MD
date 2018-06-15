@@ -11,4 +11,4 @@ MUSEOS DE MADRID - JUNIO 2018
 en lugar de aparecer "siguiente", aparecen índices "1 2 3 .. " según sea la cantidad
 de museos seleccionados.
 
-Video demostracion: [PARTE BASICA] (https://www.youtube.com/watch?v=yQ-kcEzYKpc&feature=youtu.be)
+Video demostracion: [PARTE BASICA y opcional breve] (https://www.youtube.com/watch?v=yQ-kcEzYKpc&feature=youtu.be)
